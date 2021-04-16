@@ -512,3 +512,29 @@ let person = {
   age: 12,
 };
 console.log(render(template, person));
+
+/**
+ * 图片懒加载
+ */
+let imgList = [...document.querySelectorAll("img")];
+const len = imgList.length;
+
+const lazyLoadImg = () => {
+  let count = 1;
+  return (function () {
+    const delImgList = [];
+    imgList.forEach((img, index) => {
+      const rect = img.getBoundingClientRect();
+      if (rect.top < window.innerHeight) {
+        img.src = img.dataset.src;
+        delImgList.push(index);
+        count++;
+        if (count === len) document.removeEventListener("scroll", lazyLoadImg);
+      }
+    });
+
+    imgList = imgList.filter((_, index) => !delImgList.includes(index));
+  })();
+};
+
+document.addEventListener("scroll", lazyLoadImg);
