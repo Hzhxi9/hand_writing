@@ -190,3 +190,91 @@ cs1.getIds();
 
 const cs2 = new ChildClass("cs2");
 console.log(cs2.ids);
+
+/**
+ * 数组去重
+ */
+const arr = [1, 2, 3, 3, 5, 5, 6, 3, 7];
+
+/**
+ * ES5去重
+ */
+function uniqueES5(arr) {
+  return arr.filter(function (item, index, array) {
+    return array.indexOf(item) === index;
+  });
+}
+
+/**
+ * ES6去重
+ */
+const uniqueES6 = arr => Array.from(new Set(arr));
+
+/**
+ * ES6 reduce去重
+ */
+function uniqueReduce(arr) {
+  return arr.reduce((acc, pre) => {
+    if (!acc.includes(pre)) acc.push(pre);
+    return acc;
+  }, []);
+}
+
+/**
+ * 数组扁平化
+ */
+const flatArr = [1, [2, [3]]];
+
+/**
+ * ES5
+ */
+function flatES5(arr) {
+  let newArr = [];
+  for (let i = 0; i < arr.length; i++) {
+    if (Array.isArray(arr[i])) {
+      newArr = newArr.concat(flat(arr[i]));
+    } else {
+      newArr.push(arr[i]);
+    }
+  }
+  return newArr;
+}
+
+/**
+ * ES6
+ */
+function flatES6(arr) {
+  while (arr.some(item => Array.isArray(item))) {
+    arr = [].concat(...arr);
+  }
+  return arr;
+}
+
+/**
+ *  reduce扁平化
+ */
+function flatReduce(arr) {
+  return arr.reduce((pre, cur) => {
+    return pre.concat(Array.isArray(cur) ? flatReduce(cur) : cur);
+  }, []);
+}
+
+/**
+ *  生成器扁平化
+ */
+function* flatGenerator(arr) {
+  if (Array.isArray(arr)) {
+    for (const item of arr) {
+      yield* flatGenerator(item);
+    }
+  } else {
+    yield arr;
+  }
+}
+
+/**
+ * Array.prototype.flat
+ */
+function flatten(arr) {
+  return arr.flat(Infinity);
+}
