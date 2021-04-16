@@ -377,3 +377,138 @@ function deepClone(target, map = new WeakMap()) {
     return target;
   }
 }
+
+/**
+ * 事件总线(发布订阅模式)
+ * 一处更改操作，触发多次事件响应
+ */
+class EventEmitter {
+  constructor() {
+    /**
+     * 创建缓存对象
+     */
+    this.cache = {};
+  }
+
+  /**
+   * 注册
+   */
+  on(name, fn) {
+    if (this.cache[name]) {
+      this.cache[name].push(fn);
+    } else {
+      this.cache[name] = [fn];
+    }
+  }
+
+  /**
+   * 删除
+   */
+  off(name, fn) {
+    const tasks = this.cache[name];
+    if (tasks) {
+      const index = tasks.findIndex(f => f === fn || f.callback === fn);
+      if (index >= 0) tasks.splice(index, 1);
+    }
+  }
+
+  /**
+   * 操作
+   */
+  emit(name, once = false, ...args) {
+    const tasks = this.cache[name].slice();
+    if (tasks) {
+      for (const fn of tasks) {
+        fn(...args);
+      }
+      once && delete this.cache[name];
+    }
+  }
+}
+// 测试
+// let eventBus = new EventEmitter();
+// let fn1 = function (name, age) {
+//   console.log(`${name} ${age}`);
+// };
+// let fn2 = function (name, age) {
+//   console.log(`hello, ${name} ${age}`);
+// };
+// eventBus.on("aaa", fn1);
+// eventBus.on("aaa", fn2);
+// eventBus.emit("aaa", false, "布兰", 12);
+
+/**
+ * 解析URL参数为对象
+ */
+function parseParams(url) {
+  /**
+   *  url匹配正则
+   */
+  const reg = /.+\?(.+)$/;
+
+  const paramsStr = reg.test(url) && reg.exec(url)[1];
+
+  /**
+   *  根据&进行分割
+   */
+  const paramsArr = paramsStr && paramsStr.split("&");
+
+  /**
+   * 定义参数对象
+   */
+  const params = {};
+
+  if (paramsArr && paramsArr.length) {
+    paramsArr.forEach(item => {
+      if (/=/.test(item)) {
+        /**
+         * 处理参数带=
+         */
+        let [key, value] = item.split("=");
+        /**
+         * 解码
+         */
+        value = decodeURIComponent(value);
+        /**
+         * 处理数字
+         */
+        value = /^\d+$/.test(value) ? parseFloat(value) : value;
+
+        if (params.hasOwnProperty(key)) {
+          /**
+           * 已经存在当前key,转化成数组
+           */
+          params[key] = [].concat(params[key], value);
+        } else {
+          params[key] = value;
+        }
+      } else {
+        /**
+         * 处理没有value的参数
+         */
+        params[item] = true;
+      }
+    });
+  }
+  return params;
+}
+
+/**
+ * 字符串模板
+ */
+function render(template, data) {
+  const reg = /\{\{(\w+)\}\}/;
+
+  if (reg.test(template)) {
+    const value = reg.exec(template)[1];
+    template = template.replace(reg, data[value]);
+    return render(template, data);
+  }
+  return template;
+}
+let template = "我是{{name}}，年龄{{age}}，性别{{sex}}";
+let person = {
+  name: "布兰",
+  age: 12,
+};
+console.log(render(template, person));
