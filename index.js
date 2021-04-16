@@ -278,3 +278,102 @@ function* flatGenerator(arr) {
 function flatten(arr) {
   return arr.flat(Infinity);
 }
+
+/**
+ *  浅拷贝
+ */
+const o = {
+  a: "a",
+  b: {
+    b: "b",
+  },
+};
+const arrObj = [1, 2, { o: "o" }];
+/**
+ * Object.assign
+ * 单层对象是深拷贝
+ * 多层对象是浅拷贝
+ */
+
+const assignObj = Object.assign({}, o);
+
+/**
+ *  Array.prototype.concat
+ *  作用于原始值
+ */
+const concatArr = [].concat(arrObj);
+
+/**
+ *  Array.prototype.slice
+ *  作用于原始值
+ */
+const sliceArr = arrObj.slice();
+
+/**
+ *  浅拷贝只考虑对象属性
+ */
+const copyAttr = o => {
+  if (typeof o !== "object") return;
+
+  const newO = o instanceof Array ? [] : {};
+
+  for (const key in o) {
+    if (o.hasOwnProperty(key)) {
+      newO[key] = o[key];
+    }
+  }
+  return newO;
+};
+
+/**
+ * 深拷贝
+ */
+
+/**
+ * 深拷贝只考虑对象属性
+ */
+const deepCloneAttr = o => {
+  if (typeof o !== "object") return;
+  const result = o instanceof Array ? [] : {};
+  for (const key in o) {
+    if (o.hasOwnProperty(key)) {
+      result[key] = typeof o[key] === "object" ? deepCloneAttr(o[key]) : o[key];
+    }
+  }
+  return result;
+};
+
+/**
+ * 深拷贝考虑对象属性， 方法以及内置对象， 解决循环引用
+ */
+const isObject = target =>
+  (typeof target === "object" || typeof target === "function") && target !== null;
+
+function deepClone(target, map = new WeakMap()) {
+  if (map.get(target)) return target;
+  console.log(map, "====>");
+  /**
+   * 获取当前值的构造函数,获取它的类型
+   */
+  const constructor = target.constructor;
+  /**
+   * 检查当前对象是否与正则、日期对象匹配
+   */
+  if (/^(RegExp | Date)$/i.test(constructor.name)) return new constructor(target);
+
+  if (isObject(target)) {
+    /**
+     * 为循环引用的对象做标记
+     */
+    map.set(target, true);
+    const cloneTarget = Array.isArray(target) ? [] : {};
+    for (let prop in target) {
+      if (target.hasOwnProperty(prop)) {
+        cloneTarget[prop] = deepClone(target[prop], map);
+      }
+    }
+    return cloneTarget;
+  } else {
+    return target;
+  }
+}
