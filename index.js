@@ -516,28 +516,28 @@ console.log(render(template, person));
 /**
  * 图片懒加载
  */
-let imgList = [...document.querySelectorAll("img")];
-const len = imgList.length;
+// let imgList = [...document.querySelectorAll("img")];
+// const len = imgList.length;
 
-const lazyLoadImg = () => {
-  let count = 1;
-  return (function () {
-    const delImgList = [];
-    imgList.forEach((img, index) => {
-      const rect = img.getBoundingClientRect();
-      if (rect.top < window.innerHeight) {
-        img.src = img.dataset.src;
-        delImgList.push(index);
-        count++;
-        if (count === len) document.removeEventListener("scroll", lazyLoadImg);
-      }
-    });
+// const lazyLoadImg = () => {
+//   let count = 1;
+//   return (function () {
+//     const delImgList = [];
+//     imgList.forEach((img, index) => {
+//       const rect = img.getBoundingClientRect();
+//       if (rect.top < window.innerHeight) {
+//         img.src = img.dataset.src;
+//         delImgList.push(index);
+//         count++;
+//         if (count === len) document.removeEventListener("scroll", lazyLoadImg);
+//       }
+//     });
 
-    imgList = imgList.filter((_, index) => !delImgList.includes(index));
-  })();
-};
+//     imgList = imgList.filter((_, index) => !delImgList.includes(index));
+//   })();
+// };
 
-document.addEventListener("scroll", lazyLoadImg);
+// document.addEventListener("scroll", lazyLoadImg);
 
 /**
  *  防抖
@@ -652,11 +652,36 @@ function throttle(f, delay, options) {
   return throttled;
 }
 
-let count = 0;
-const node = document.getElementById("layout");
-const btn = document.getElementById("btn");
-function getCount(e) {
-  console.log("====");
-  node.innerHTML = count++;
+// let count = 0;
+// const node = document.getElementById("layout");
+// const btn = document.getElementById("btn");
+// function getCount(e) {
+//   console.log("====");
+//   node.innerHTML = count++;
+// }
+// btn.onclick = throttle(getCount, 1000);
+
+/**
+ * 函数柯里化
+ */
+// function curry(f) {
+//   const fn = (...args) => {
+//     if (args.length === f.length) return f(...args);
+//     return (...arg) => fn(...args, ...arg);
+//   };
+//   return fn;
+// }
+
+function curry(fn) {
+  let params = [];
+  const next = (...args) => {
+    params = [...params, ...args];
+    return params.length < fn.length ? next : fn.call(fn, ...params);
+  };
+  return next;
 }
-btn.onclick = throttle(getCount, 1000);
+function add(a, b, c) {
+  return a + b + c;
+}
+let addCurry = curry(add);
+console.log(addCurry(1)(2)(3));
