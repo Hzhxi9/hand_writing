@@ -538,3 +538,125 @@ const lazyLoadImg = () => {
 };
 
 document.addEventListener("scroll", lazyLoadImg);
+
+/**
+ *  防抖
+ *
+ *  触发高频事件 N 秒后只会执行一次，如果 N 秒内事件再次触发，则会重新计时。
+ */
+// function debounce(f, delay) {
+//   let timer;
+//   return function () {
+//     const ctx = this;
+//     clearTimeout(timer);
+//     timer = setTimeout(function () {
+//       f.call(ctx, ...arguments);
+//     }, delay);
+//   };
+// }
+
+function debounce(f, delay, immediate) {
+  let timer, result;
+  const debounced = function () {
+    const ctx = this;
+
+    timer && clearTimeout(timer);
+
+    if (immediate) {
+      const callNow = !timer;
+      timer = setTimeout(function () {
+        timer = null;
+      }, delay);
+
+      callNow && (result = f.call(ctx, ...arguments));
+    } else {
+      timer = setTimeout(function () {
+        f.call(ctx, ...arguments);
+      }, delay);
+    }
+
+    return result;
+  };
+
+  debounced.cancel = function () {
+    clearTimeout(timer);
+    timer = null;
+  };
+
+  return debounced;
+}
+
+/**
+ * 节流
+ * 触发高频事件,且n秒内只执行一次
+ */
+// function throttle(f, delay) {
+//   let ctx;
+//   let count = 0;
+//   return function () {
+//     const now = +new Date();
+//     ctx = this;
+//     if (now - count > delay) {
+//       f.call(ctx, ...arguments);
+//       count = now;
+//     }
+//   };
+// }
+
+/**
+ * 节流
+ * @param options
+ *  leading  是否可以立即执行一次  true
+ *  trailing  结束调用的时候是否还要执行一次 true
+ */
+function throttle(f, delay, options) {
+  let timer, ctx, args;
+  let count = 0;
+  if (!options) options = {};
+
+  const later = function () {
+    count = options.leading === false ? 0 : new Date().getTime();
+    timer = null;
+    f.call(ctx, ...args);
+    if (!timer) ctx = args = null;
+  };
+
+  const throttled = function () {
+    const now = new Date().getTime();
+
+    if (!count && options.leading === false) count = now;
+
+    const remaining = delay - (now - count);
+    ctx = this;
+    args = arguments;
+
+    if (remaining <= 0 || remaining > delay) {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      count = now;
+      f.call(ctx, ...args);
+      if (!timer) ctx = args = null;
+    } else if (!timer && !options.trailing) {
+      timer = setTimeout(later, remaining);
+    }
+  };
+
+  throttled.cancel = function () {
+    clearTimeout(timer);
+    timer = null;
+    count = 0;
+  };
+
+  return throttled;
+}
+
+let count = 0;
+const node = document.getElementById("layout");
+const btn = document.getElementById("btn");
+function getCount(e) {
+  console.log("====");
+  node.innerHTML = count++;
+}
+btn.onclick = throttle(getCount, 1000);
