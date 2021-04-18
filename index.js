@@ -664,24 +664,133 @@ function throttle(f, delay, options) {
 /**
  * 函数柯里化
  */
-// function curry(f) {
-//   const fn = (...args) => {
-//     if (args.length === f.length) return f(...args);
-//     return (...arg) => fn(...args, ...arg);
-//   };
-//   return fn;
-// }
-
-function curry(fn) {
-  let params = [];
+function curry(f) {
   const next = (...args) => {
-    params = [...params, ...args];
-    return params.length < fn.length ? next : fn.call(fn, ...params);
+    if (args.length === f.length) return f.call(f, ...args);
+    return (...arg) => next(...args, ...arg);
   };
+
   return next;
 }
+
+// function curry(fn) {
+//   let params = [];
+//   const next = (...args) => {
+//     params = [...params, ...args];
+//     return params.length < fn.length ? next : fn.call(fn, ...params);
+//   };
+//   return next;
+// }
 function add(a, b, c) {
   return a + b + c;
 }
 let addCurry = curry(add);
 console.log(addCurry(1)(2)(3));
+
+/**
+ * 偏函数
+ */
+function partial(fn, ...args) {
+  return (...arg) => {
+    return fn.call(fn, ...args, ...arg);
+  };
+}
+
+const partialAdd = partial(add, 1);
+console.log(partialAdd(2, 3));
+
+/**
+ * Jsonp
+ * script标签不受同源策略约束，可以进行跨越请求，兼容性好但只能用于GET请求
+ * 创建script标签,并提供一个回调函数来接收数据
+ *
+ */
+const jsonp = ({ url, params, callbackName }) => {
+  const generateUrl = () => {
+    let paramStr = "";
+
+    for (const key in params) {
+      if (params.hasOwnProperty(key)) {
+        paramStr += `${key}=${params[key]}&`;
+      }
+    }
+
+    paramStr += `callbackName=${callbackName}`;
+
+    return `${url}?${paramStr}`;
+  };
+
+  return new Promise((resolve, reject) => {
+    const scriptEle = document.createElement("script");
+
+    scriptEle.src = generateUrl();
+
+    document.body.appendChild(scriptEle);
+
+    window[callbackName] = data => {
+      resolve(data);
+      document.body.removeChild(scriptEle);
+    };
+  });
+};
+jsonp("https://y.qq.com/download/download.js", { format: "jsonp" }).then(res => {
+  console.log(res);
+});
+
+/**
+ * AJAX
+ */
+const isObject = value => Object.prototype.toString.call(value) === "[object Object]";
+
+const parseParams = params => {
+  let result = "";
+
+  for (const key in params) {
+    if (params.hasOwnProperty(key)) {
+      result += `${key}=${params[key]}&`;
+    }
+  }
+
+  return result.endsWith("&") ? result.substr(0, result.length - 1) : result;
+};
+
+const defaultHeader = {
+  "Content-type": "application/x-www-from-urlencoded",
+};
+
+const request = options => {
+  return new Promise((resolve, reject) => {
+    const { method, url, params, header } = options;
+
+    const xhr = XMLHttpRequest ? new XMLHttpRequest() : new ActiveXHR("Microsoft.XMLHTTP");
+
+    if (method === "GET" || method === "DELETE") {
+      const requestUrl = `${url}?${parseParams(params)}`;
+      xhr.open(method, requestUrl, true);
+    } else {
+      xhr.open(method, url);
+    }
+
+    const mergedHeaders = Object.assign({}, defaultHeader, header);
+    Object.keys(mergedHeaders).forEach(key => {
+      xhr.setRequestHeader(key, mergedHeaders[key]);
+    });
+
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          resolve(xhr.response);
+        } else {
+          reject(xhr.status);
+        }
+      }
+    };
+
+    xhr.onerror = error => {
+      reject(error);
+    };
+
+    const data = method === "POST" || method === "PUT" ? parseParams(params) : null;
+    xhr.send(data);
+  });
+};
