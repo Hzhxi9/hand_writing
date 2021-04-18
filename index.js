@@ -979,3 +979,79 @@ Array.prototype.writeFind = function (cb, thisArg) {
 
   return undefined;
 };
+
+/**
+ * call
+ */
+Function.prototype.writeCall = function (context) {
+  const ctx = context || window;
+
+  ctx.fn = this;
+
+  const args = [];
+
+  for (let i = 0, len = arguments.length; i < len; i++) {
+    args.push(`arguments[${i}]`);
+  }
+
+  const result = eval(`ctx.fn(${args})`);
+
+  console.log(result, "===>");
+
+  delete ctx.fn;
+
+  return result;
+};
+
+/**
+ * apply
+ */
+Function.prototype.writeApply = function (context, arr) {
+  const ctx = context || window;
+  ctx.fn = this;
+
+  let result;
+
+  if (!arr) {
+    result = ctx.fn();
+  } else {
+    const args = [];
+    for (let i = 0, len = arr.length; i < len; i++) {
+      args.push(`arr[${i}]`);
+    }
+    result = eval(`ctx.fn(${args})`);
+  }
+
+  delete ctx.fn;
+
+  return result;
+};
+
+/**
+ * bind
+ */
+Function.prototype.writeBind = function (context) {
+  const this_ = this;
+  const args = Array.prototype.slice.call(arguments, 1);
+
+  function fun() {}
+
+  function f() {
+    const thisArgs = Array.prototype.slice.call(arguments);
+
+    return this_.apply(this instanceof fun ? this : context, args.concat(thisArgs));
+  }
+
+  fun.prototype = this.prototype;
+  f.prototype = new fun();
+
+  return f;
+};
+
+const o11 = {
+  id: 1,
+};
+function getId(name, id) {
+  console.log(this.id, name, id);
+}
+getId.writeBind(o11, "1", 3)();
