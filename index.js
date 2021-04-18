@@ -705,92 +705,277 @@ console.log(partialAdd(2, 3));
  * 创建script标签,并提供一个回调函数来接收数据
  *
  */
-const jsonp = ({ url, params, callbackName }) => {
-  const generateUrl = () => {
-    let paramStr = "";
+// const jsonp = ({ url, params, callbackName }) => {
+//   const generateUrl = () => {
+//     let paramStr = "";
 
-    for (const key in params) {
-      if (params.hasOwnProperty(key)) {
-        paramStr += `${key}=${params[key]}&`;
-      }
-    }
+//     for (const key in params) {
+//       if (params.hasOwnProperty(key)) {
+//         paramStr += `${key}=${params[key]}&`;
+//       }
+//     }
 
-    paramStr += `callbackName=${callbackName}`;
+//     paramStr += `callbackName=${callbackName}`;
 
-    return `${url}?${paramStr}`;
-  };
+//     return `${url}?${paramStr}`;
+//   };
 
-  return new Promise((resolve, reject) => {
-    const scriptEle = document.createElement("script");
+//   return new Promise((resolve, reject) => {
+//     const scriptEle = document.createElement("script");
 
-    scriptEle.src = generateUrl();
+//     scriptEle.src = generateUrl();
 
-    document.body.appendChild(scriptEle);
+//     document.body.appendChild(scriptEle);
 
-    window[callbackName] = data => {
-      resolve(data);
-      document.body.removeChild(scriptEle);
-    };
-  });
-};
-jsonp("https://y.qq.com/download/download.js", { format: "jsonp" }).then(res => {
-  console.log(res);
-});
+//     window[callbackName] = data => {
+//       resolve(data);
+//       document.body.removeChild(scriptEle);
+//     };
+//   });
+// };
+// jsonp("https://y.qq.com/download/download.js", { format: "jsonp" }).then(res => {
+//   console.log(res);
+// });
 
 /**
  * AJAX
  */
-const isObject = value => Object.prototype.toString.call(value) === "[object Object]";
+// const isObject = value => Object.prototype.toString.call(value) === "[object Object]";
 
-const parseParams = params => {
-  let result = "";
+// const parseParams = params => {
+//   let result = "";
 
-  for (const key in params) {
-    if (params.hasOwnProperty(key)) {
-      result += `${key}=${params[key]}&`;
+//   for (const key in params) {
+//     if (params.hasOwnProperty(key)) {
+//       result += `${key}=${params[key]}&`;
+//     }
+//   }
+
+//   return result.endsWith("&") ? result.substr(0, result.length - 1) : result;
+// };
+
+// const defaultHeader = {
+//   "Content-type": "application/x-www-from-urlencoded",
+// };
+
+// const request = options => {
+//   return new Promise((resolve, reject) => {
+//     const { method, url, params, header } = options;
+
+//     const xhr = XMLHttpRequest ? new XMLHttpRequest() : new ActiveXHR("Microsoft.XMLHTTP");
+
+//     if (method === "GET" || method === "DELETE") {
+//       const requestUrl = `${url}?${parseParams(params)}`;
+//       xhr.open(method, requestUrl, true);
+//     } else {
+//       xhr.open(method, url);
+//     }
+
+//     const mergedHeaders = Object.assign({}, defaultHeader, header);
+//     Object.keys(mergedHeaders).forEach(key => {
+//       xhr.setRequestHeader(key, mergedHeaders[key]);
+//     });
+
+//     xhr.onreadystatechange = () => {
+//       if (xhr.readyState === 4) {
+//         if (xhr.status === 200) {
+//           resolve(xhr.response);
+//         } else {
+//           reject(xhr.status);
+//         }
+//       }
+//     };
+
+//     xhr.onerror = error => {
+//       reject(error);
+//     };
+
+//     const data = method === "POST" || method === "PUT" ? parseParams(params) : null;
+//     xhr.send(data);
+//   });
+// };
+
+/**
+ * 数组方法
+ */
+
+/**
+ * 实现forEach
+ */
+Array.prototype.writeForEach = function (cb, thisArg) {
+  if (this === null) throw new TypeError(`${this} is null or not defined`);
+
+  if (typeof cb !== "function") throw new TypeError(`${cb} is no function`);
+
+  const o = Object(this);
+
+  const len = o.length >>> 0;
+
+  let k = 0;
+  while (k < len) {
+    if (k in o) {
+      cb.call(thisArg, o[k], k, o);
     }
+    k++;
+  }
+};
+
+/**
+ * 实现map
+ */
+Array.prototype.writeMap = function (cb, thisArg) {
+  if (this === null) throw new TypeError(`${this} is null or not defined`);
+
+  if (typeof cb !== "function") throw new TypeError(`${cb} is no function`);
+
+  const o = Object(this);
+
+  const len = o.length >>> 0;
+
+  let k = 0,
+    result = [];
+
+  while (k < len) {
+    console.log(o, "===>", k, o[k]);
+    if (k in o) {
+      result[k] = cb.call(thisArg, o[k], k, o);
+    }
+    k++;
   }
 
-  return result.endsWith("&") ? result.substr(0, result.length - 1) : result;
+  return result;
 };
 
-const defaultHeader = {
-  "Content-type": "application/x-www-from-urlencoded",
-};
+/**
+ * 实现filter
+ */
+Array.prototype.writeFilter = function (cb, thisArg) {
+  if (this === null) throw new TypeError(`${this} is null or not defined`);
 
-const request = options => {
-  return new Promise((resolve, reject) => {
-    const { method, url, params, header } = options;
+  if (typeof cb !== "function") throw new TypeError(`${cb} is no function`);
 
-    const xhr = XMLHttpRequest ? new XMLHttpRequest() : new ActiveXHR("Microsoft.XMLHTTP");
+  const o = Object(this),
+    len = o.length >>> 0;
 
-    if (method === "GET" || method === "DELETE") {
-      const requestUrl = `${url}?${parseParams(params)}`;
-      xhr.open(method, requestUrl, true);
-    } else {
-      xhr.open(method, url);
-    }
+  let k = 0,
+    result = [];
 
-    const mergedHeaders = Object.assign({}, defaultHeader, header);
-    Object.keys(mergedHeaders).forEach(key => {
-      xhr.setRequestHeader(key, mergedHeaders[key]);
-    });
-
-    xhr.onreadystatechange = () => {
-      if (xhr.readyState === 4) {
-        if (xhr.status === 200) {
-          resolve(xhr.response);
-        } else {
-          reject(xhr.status);
-        }
+  while (k < len) {
+    if (k in o) {
+      if (cb.call(thisArg, o[k], k, o)) {
+        result.push(o[k]);
       }
-    };
+    }
+    k++;
+  }
 
-    xhr.onerror = error => {
-      reject(error);
-    };
+  return result;
+};
 
-    const data = method === "POST" || method === "PUT" ? parseParams(params) : null;
-    xhr.send(data);
-  });
+/**
+ * 实现some
+ */
+Array.prototype.writeSome = function (cb, thisArg) {
+  if (this === null) throw new TypeError(`${this} is null or not defined`);
+
+  if (typeof cb !== "function") throw new TypeError(`${cb} is no function`);
+
+  const o = Object(this),
+    len = o.length >>> 0;
+
+  let k = 0;
+
+  while (k < len) {
+    if (cb.call(thisArg, o[k], k, o)) {
+      return true;
+    }
+    k++;
+  }
+
+  return false;
+};
+
+/**
+ * 实现reduce
+ */
+Array.prototype.writeReduce = function (cb, initialValue) {
+  if (this === null) throw new TypeError(`${this} is null or not defined`);
+
+  if (typeof cb !== "function") throw new TypeError(`${cb} is no function`);
+
+  const o = Object(this),
+    len = o.length >>> 0;
+
+  let k = 0,
+    acc;
+
+  if (arguments.length > 1) {
+    acc = initialValue;
+  } else {
+    /**
+     * 当没传入初始值，取数组第一个不为empty的值
+     */
+    while (k < len && !(k in o)) {
+      k++;
+    }
+    if (k > len) throw new TypeError("Reduce of empty array with no initial value");
+
+    acc = o[k++];
+  }
+
+  while (k < len) {
+    if (k in o) {
+      acc = cb(acc, o[k], k, o);
+    }
+    k++;
+  }
+
+  return acc;
+};
+
+/**
+ * 实现every
+ */
+Array.prototype.writeEvery = function (cb, thisArg) {
+  if (this === null) throw new TypeError(`${this} is null or not defined`);
+
+  if (typeof cb !== "function") throw new TypeError(`${cb} is no function`);
+
+  const o = Object(this),
+    len = o.length >>> 0;
+
+  let k = 0;
+
+  while (k < len) {
+    if (k in o) {
+      const result = cb.call(thisArg, o[k], k, o);
+      console.log(cb.call(thisArg, o[k], k, o));
+      if (!result) return false;
+    }
+    k++;
+  }
+  return true;
+};
+
+/**
+ * 实现find
+ */
+Array.prototype.writeFind = function (cb, thisArg) {
+  if (this === null) throw new TypeError(`${this} is null or not defined`);
+
+  if (typeof cb !== "function") throw new TypeError(`${cb} is no function`);
+
+  const o = Object(this),
+    len = o.length >>> 0;
+
+  let k = 0;
+
+  while (k < len) {
+    if (cb.call(thisArg, o[k], k, o)) {
+      return o[k];
+    }
+    k++;
+  }
+
+  return undefined;
 };
