@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="layout" style="width: 200px; height: 200px"></div>
+    <button id="btn">button</button>
+  </body>
+</html>
+<!-- <script src="index.js"></script> -->
+<script>
+  // const jsonp = ({ url, params, callbackName }) => {
+  //   const generateUrl = () => {
+  //     let dataStr = "";
+  //     for (const key in params) {
+  //       if (params.hasOwnProperty(key)) {
+  //         dataStr += `${key}=${params[key]}&`;
+  //       }
+  //     }
+  //     dataStr += `callbackName=${callbackName}`;
+  //     console.log(`${url}?${dataStr}`);
+  //     return `${url}?${dataStr}`;
+  //   };
+
+  //   return new Promise((resolve, reject) => {
+  //     const scriptEle = document.createElement("script");
+  //     scriptEle.src = generateUrl();
+  //     document.body.appendChild(scriptEle);
+  //     console.log(window);
+  //     window[callbackName] = data => {
+  //       resolve(data);
+  //       document.removeChild(scriptEle);
+  //     };
+  //   });
+  // };
+  // jsonp({
+  //   url: "https://y.qq.com/download/download.js",
+  //   params: { format: "jsonp" },
+  //   callbackName: "MusicJsonCallback",
+  // }).then(res => {
+  //   console.log(res);
+  // });
+
+  const isObject = value => Object.prototype.toString.call(value) === "[object Object]";
+
+  const parseParams = params => {
+    let result = "";
+
+    for (const key in params) {
+      if (params.hasOwnProperty(key)) {
+        result += `${key}=${params[key]}&`;
+      }
+    }
+
+    return result.endsWith("&") ? result.substr(0, result.length - 1) : result;
+  };
+
+  const defaultHeader = {
+    "Content-type": "application/x-www-from-urlencoded",
+  };
+
+  const request = options => {
+    return new Promise((resolve, reject) => {
+      const { method, url, params, header } = options;
+
+      const xhr = XMLHttpRequest ? new XMLHttpRequest() : new ActiveXHR("Microsoft.XMLHTTP");
+
+      if (method === "GET" || method === "DELETE") {
+        const requestUrl = `${url}?${parseParams(params)}`;
+        xhr.open(method, requestUrl, true);
+      } else {
+        xhr.open(method, url);
+      }
+
+      const mergedHeaders = Object.assign({}, defaultHeader, header);
+      Object.keys(mergedHeaders).forEach(key => {
+        xhr.setRequestHeader(key, mergedHeaders[key]);
+      });
+
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            resolve(xhr.response);
+          } else {
+            reject(xhr.status);
+          }
+        }
+      };
+
+      xhr.onerror = error => {
+        reject(error);
+      };
+
+      const data = method === "POST" || method === "PUT" ? parseParams(params) : null;
+      xhr.send(data);
+    });
+  };
+
+  const options = {
+    method: "GET",
+    url: "https://api.github.com/users/github",
+    params: {
+      size: 10,
+      page: 1,
+    },
+  };
+  request(options)
+    .then(res => {
+      console.log(res, "====>");
+    })
+    .catch(e => {
+      console.log(e);
+    });
+
+  Array.prototype.writeForEach = function (cb, thisArg) {
+    if (this === null) throw new TypeError(`${this} is null or not defined`);
+
+    if (typeof cb !== "function") throw new TypeError(`${cb} is no function`);
+
+    const o = Object(this);
+
+    console.log(o, "===>");
+    const len = o.length >>> 0;
+
+    let k = 0;
+    while (k < len) {
+      if (k in o) {
+        cb.call(thisArg, o[k], k, o);
+      }
+      k++;
+    }
+  };
+
+  [1, 2, 3, 4].writeForEach((item, index, arr) => {
+    console.log(item, index, arr);
+  });
+</script>
