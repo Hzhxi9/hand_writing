@@ -1162,3 +1162,117 @@ Object.writeAssign = function (target, ...source) {
 
   return ret;
 };
+
+/**
+ * JSON.stringify
+ *    undefined ===> undefined
+ *    boolean ===> true/false
+ *    number ===> 字符串数值
+ *    symbol ===> undefined
+ *    null ===> 'null'
+ *    string ===> string
+ *    NaN/infinity ===> 'null'
+ *    function ===> undefined
+ *
+ *    对象
+ *      数组,如果属性出现undefined,symbol,函数,转换为'null'
+ *      RegExp,返回'{}'
+ *      Date, 返回Date的toJSON字符串值
+ *      普通对象
+ *        如果有toJSON()方法,那么序列化toJSON()的返回值
+ *        如果属性值中出现undefined、任意函数、symbol值，忽略
+ *        所有以symbol为属性键的属性都会被忽略
+ *
+ *    对包含循环引用的对象(对象之间相互引用，形成无限)执行此方法,会抛出错误
+ */
+function stringify(data) {
+  const type = typeof data;
+
+  if (type !== "object") {
+    let result;
+    /**
+     * 不是对象时
+     */
+    if (Number.isNaN(data) || data === Infinity) {
+      /**
+       * NaN/infinity ==> 'null'
+       */
+      result = "null";
+    } else if (type === "undefined" || type === "function" || type === "symbol") {
+      /**
+       * undefined/function/symbol ==> undefined
+       */
+      return undefined;
+    } else if (type === "string") {
+      /**
+       * string ==> 'string'
+       */
+      result = `"${data}"`;
+    }
+    /**
+     * boolean ==> 'true/false'
+     */
+    return String(result);
+  } else if (type === "object") {
+    /**
+     *  对象
+     */
+
+    if (type === null) {
+      /**
+       * null ==> 'null'
+       */
+      return "null";
+    } else if (data.toJSON() && typeof data.toJSON === "function") {
+      /**
+       * toJSON() ==> 序列化toJSON()的返回值
+       */
+      return stringify(data.toJSON());
+    } else if (data instanceof Array) {
+      /**
+       * 当为数组时
+       */
+      let result = [];
+
+      data.forEach((item, index) => {
+        if (typeof item === "undefined" || typeof item === "symbol" || typeof item === "function") {
+          /**
+           * undefined/symbol/function ==> 'null'
+           */
+          result[index] = "null";
+        } else {
+          result[index] = stringify(item);
+        }
+      });
+
+      result = `[${result}]`;
+
+      return result.replace(/'/g, '"');
+    }
+  } else {
+    /**
+     * 普通对象
+     */
+
+    let result = [];
+
+    Object.keys(data).forEach(item => {
+      if (typeof item !== "symbol") {
+        if (
+          typeof data[item] !== "undefined" ||
+          typeof data[item] !== "symbol" ||
+          typeof data[item] === "function"
+        ) {
+          result.push(`"${item}":${stringify(data[item])}`);
+        }
+      }
+    });
+
+    return `"${result}"`.replace(/'/g, '"');
+  }
+}
+
+/**
+ * JSON.parse
+ */
+const o = new Function("return" + json)();
