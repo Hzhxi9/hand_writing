@@ -1055,3 +1055,110 @@ function getId(name, id) {
   console.log(this.id, name, id);
 }
 getId.writeBind(o11, "1", 3)();
+
+/**
+ * new
+ */
+function new_(fn) {
+  if (typeof fn !== "function") throw new TypeError(`${fn} is no function`);
+
+  const o = new Object();
+
+  Object.setPrototypeOf(o, fn.prototype);
+
+  const args = Array.prototype.slice.call(arguments, 1);
+
+  const _o = fn.call(o, ...args);
+
+  return _o instanceof Object ? _o : o;
+}
+
+function new_1(f, ...args) {
+  if (typeof fn !== "function") throw new TypeError(`${fn} is no function`);
+
+  const o = new Object();
+  Object.setPrototype(o, fn.prototype);
+
+  const _o = fn.call(o, ...args);
+
+  return _o instanceof Object ? _o : o;
+}
+
+function new_2(f, ...args) {
+  if (typeof f !== "function") throw new TypeError(`${f} is no function`);
+
+  const o = Object.create(f.prototype);
+
+  const _o = f.call(o, ...args);
+
+  return _o instanceof Object ? _o : o;
+}
+
+function new_3() {
+  const o = new Object();
+  Constructor = [].shift.call(arguments);
+  o.__proto__ = Constructor.prototype;
+  const ret = Constructor.apply(o, arguments);
+
+  return typeof ret === "object" ? ret || o : o;
+}
+
+function Person(name, age) {
+  this.name = name;
+  this.age = age;
+}
+let p22 = new_2(Person, "布兰", 12);
+console.log(p22); // { name: '布兰', age: 12 }
+
+/**
+ * instanceof
+ */
+function instanceOf(left, right) {
+  const proto = left.__proto__;
+  while (true) {
+    if (proto === null) return false;
+    if (proto === right.prototype) return true;
+    proto = proto.__proto__;
+  }
+}
+
+/**
+ * create
+ */
+Object.writeCreate = function (proto, propertyObject = undefined) {
+  if (typeof proto !== "object" || typeof proto !== "function")
+    throw new TypeError("Object prototype may only be an Object or null.");
+
+  if (propertyObject === null) throw new TypeError("propertyObject is null");
+
+  function Fun() {}
+
+  Fun.prototype = proto;
+
+  const o = new Fun();
+  if (propertyObject) Object.defineProperties(o, propertyObject);
+  if (proto === null) proto.__proto__ = null;
+
+  return o;
+};
+
+/**
+ * assign
+ */
+Object.writeAssign = function (target, ...source) {
+  if (target === null) throw new TypeError("Cannot convert undefined or null to object");
+
+  const ret = new Object(target);
+
+  source.forEach(o => {
+    if (o !== null) {
+      for (const key in o) {
+        if (o.hasOwnProperty(key)) {
+          ret[key] = o[key];
+        }
+      }
+    }
+  });
+
+  return ret;
+};
