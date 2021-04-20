@@ -608,3 +608,568 @@ function curry1(f) {
 function partial(fn, ...args) {
   return (...arg) => fn.call(fn, ...args, ...arg);
 }
+
+/**
+ * jsonp
+ */
+function jsonp(url: string, params: any, callbackName: string) {
+  const urlGenerator = () => {
+    let result = "";
+    for (const key in params) {
+      if (params.hasOwnProperty(key)) {
+        result += `=${params[key]}&`;
+      }
+    }
+    result += `callbackName=${callbackName}`;
+
+    return `${url}?${result}`;
+  };
+
+  return new Promise((resolve, reject) => {
+    const scriptEle = document.createElement("script");
+    scriptEle.src = urlGenerator();
+
+    document.body.appendChild(scriptEle);
+
+    window[callbackName] = data => {
+      resolve(data);
+      document.body.removeChild(scriptEle);
+    };
+  });
+}
+
+/**
+ * ajax
+ */
+const isObjectType = data => Object.prototype.toString.call(data) === "[object Object]";
+
+const parserParams = data => {
+  if (!isObjectType(data)) throw new TypeError(data + "is no object");
+
+  let result = "";
+  Object.keys(data).forEach(key => {
+    if (data.hasOwnProperty(key)) {
+      result += `${key}=${data[key]}&`;
+    }
+  });
+
+  return result.endsWith("&") ? result.substr(0, result.length - 1) : result;
+};
+
+const defaultHeader = {
+  "Content-Type": "application/x-www-from-urlencoded",
+};
+
+const request = options => {
+  return new Promise((resolve, reject) => {
+    const { method, url, params, header } = options;
+    const xhr = XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+
+    if (method === "GET" || method === "DELETE") {
+      const requestUrl = `${url}?${parserParams(params)}`;
+      xhr.open(method, requestUrl, true);
+    } else {
+      xhr.open(method, url);
+    }
+
+    const mergerHeader = Object.assign({}, defaultHeader, header);
+    Object.keys(mergerHeader).forEach(key => {
+      xhr.setHeader(key, mergerHeader[key]);
+    });
+
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          resolve(xhr.response);
+        } else {
+          reject(xhr.status);
+        }
+      }
+    };
+
+    xhr.onerror = function (error) {
+      reject(error);
+    };
+
+    const data = method === "POST" || method === "PUT" ? parserParams(params) : null;
+
+    xhr.send(data);
+  });
+};
+
+/**
+ * 数组方法
+ */
+
+/**
+ * forEach
+ */
+Array.prototype.writeForEach = function (cb, thisArg) {
+  if (this === null) throw new TypeError(`${this} is null`);
+
+  if (typeof cb !== "function") throw new TypeError(`${cb} is no function`);
+
+  const o = Object(this),
+    len = o.length >>> 0;
+
+  let k = 0,
+    T;
+
+  if (arguments.length > 1) T = thisArg;
+
+  while (k < len) {
+    if (k in o) {
+      cb.call(T, o[k], k, o);
+    }
+    k++;
+  }
+};
+
+/**
+ * map
+ */
+Array.prototype.writeMap = function (cb, thisArg) {
+  if (this === null) throw new TypeError(`${this} is null`);
+
+  if (typeof cb !== "function") throw new TypeError(`${cb} is no function`);
+
+  const o = Object(this),
+    len = o.length >>> 0;
+
+  let T,
+    k = 0,
+    result = [];
+
+  if (arguments.length > 1) T = thisArg;
+
+  while (k < len) {
+    if (k in o) {
+      result[k] = cb.call(T, o[k], k, o);
+    }
+    k++;
+  }
+
+  return result;
+};
+
+/**
+ * filter
+ */
+Array.prototype.writeFilter = function (cb, thisArg) {
+  if (this === null)
+    throw new TypeError(` ${this} is null or not defined this is null or not defined`);
+
+  if (typeof cb !== "function") throw new TypeError(`${cb} is not function`);
+
+  const o = Object(this),
+    len = o.length >>> 0;
+
+  let T,
+    k = 0,
+    result = [];
+
+  if (arguments.length > 1) T = thisArg;
+
+  while (k < len) {
+    if (k in o) {
+      if (cb.call(T, o[k], k, o)) {
+        result.push(o[k]);
+      }
+    }
+    k++;
+  }
+
+  return result;
+};
+
+/**
+ * some
+ */
+Array.prototype.writeSome = function (cb, thisArg) {
+  if (this === null)
+    throw new TypeError(` ${this} is null or not defined this is null or not defined`);
+
+  if (typeof cb !== "function") throw new TypeError(`${cb} is not function`);
+
+  const o = Object(this),
+    len = o.length >>> 0;
+
+  let T,
+    k = 0;
+
+  if (arguments.length > 1) T = thisArg;
+
+  while (k < len) {
+    if (k in o) {
+      if (k in o) {
+        if (cb.call(T, o[k], k, o)) {
+          return true;
+        }
+      }
+    }
+    k++;
+  }
+
+  return false;
+};
+
+/**
+ * every
+ */
+Array.prototype.writeEvery = function (cb, thisArg) {
+  if (this === null)
+    throw new TypeError(` ${this} is null or not defined this is null or not defined`);
+
+  if (typeof cb !== "function") throw new TypeError(`${cb} is not function`);
+
+  const o = Object(this),
+    len = o.length >>> 0;
+
+  let T,
+    k = 0;
+
+  if (arguments.length > 1) T = thisArg;
+
+  while (k < len) {
+    if (k in o) {
+      const result = cb.call(T, o[k], k, o);
+
+      if (!result) return false;
+    }
+    k++;
+  }
+
+  return true;
+};
+
+/**
+ * find
+ */
+Array.prototype.writeFind = function (cb, thisArg) {
+  if (this === null)
+    throw new TypeError(` ${this} is null or not defined this is null or not defined`);
+
+  if (typeof cb !== "function") throw new TypeError(`${cb} is not function`);
+
+  const o = Object(this),
+    len = o.length >>> 0;
+
+  let T,
+    k = 0;
+
+  if (arguments.length > 1) T = thisArg;
+
+  while (k < len) {
+    if (k in o) {
+      if (cb.call(T, o[k], k, o)) {
+        return o[k];
+      }
+    }
+    k++;
+  }
+
+  return undefined;
+};
+
+/**
+ * reduce
+ */
+Array.prototype.writeReduce = function (cb, initialValue) {
+  if (this === null)
+    throw new TypeError(` ${this} is null or not defined this is null or not defined`);
+
+  if (typeof cb !== "function") throw new TypeError(`${cb} is not function`);
+
+  const o = Object(this),
+    len = o.length >>> 0;
+
+  let k = 0,
+    acc;
+
+  if (arguments.length > 1) {
+    acc = initialValue;
+  } else {
+    while (k < len && !(k in o)) {
+      k++;
+    }
+    if (k > len) throw new TypeError(` ${this} is not empty`);
+
+    acc = o[k++];
+  }
+
+  while (k < len) {
+    if (k in o) {
+      acc = cb(acc, o[k], k, o);
+    }
+    k++;
+  }
+
+  return acc;
+};
+
+/**
+ * call
+ */
+(Function.prototype as { writeCall: (context) => any }).writeCall = function (context): any {
+  const ctx = context || window,
+    args = [];
+
+  ctx.fn = this;
+
+  let result;
+
+  return function () {
+    for (let i = 0, len = arguments.length; i < len; i++) {
+      args.push(`${arguments[i]}`);
+    }
+
+    result = eval(`ctx.fn(${args})`);
+
+    delete ctx.fn;
+
+    return result;
+  };
+};
+
+/**
+ * apply
+ */
+((Function.prototype as unknown) as {
+  writeApply: (context: any, arr: any) => any;
+}).writeApply = function (context, arr): any {
+  const ctx = context || window;
+
+  ctx.fn = this;
+
+  let result;
+
+  if (!arr) {
+    result = ctx.fn();
+  } else {
+    const args = [];
+    for (let i = 0, len = arr.length; i < len; i++) {
+      args.push(`arr[${i}]`);
+    }
+
+    result = eval(`ctx.fn(${args})`);
+  }
+
+  delete ctx.fn;
+
+  return result;
+};
+
+/**
+ * bind
+ */
+((Function.prototype as unknown) as {
+  writeBind: (context) => any;
+}).writeBind = function (context) {
+  const ctx = this,
+    args = Array.prototype.slice.call(arguments, 1);
+
+  function Fun() {}
+
+  function bindFun() {
+    const bindArgs = Array.prototype.slice.call(arguments);
+
+    return ctx.apply(this instanceof Fun ? this : context, args.concat(bindArgs));
+  }
+
+  Fun.prototype = this.prototype;
+  bindFun.prototype = new Fun();
+
+  return bindFun;
+};
+
+/**
+ * new
+ *  在内存新建一个对象
+ *  新对象的proto赋值构造函数的原型
+ *  this指向新对象,添加新属性
+ *  判断是否非空对象
+ */
+function new_1(f) {
+  if (typeof f !== "function") throw new TypeError(f + "is not function");
+
+  const o = new Object();
+
+  Object.setPrototypeOf(o, f.prototype);
+
+  const args = Array.prototype.slice.call(arguments, 1);
+
+  const _o = f.call(o, ...args);
+
+  return _o instanceof Object ? _o : o;
+}
+
+function new_2(f, ...args) {
+  if (typeof f !== "function") throw new TypeError(f + "is not function");
+
+  const o = new Object();
+
+  Object.setPrototypeOf(o, f.prototype);
+
+  const _o = f.call(o, ...args);
+
+  return _o instanceof Object ? _o : o;
+}
+
+function new_3(f, ...args) {
+  if (typeof f !== "function") throw new TypeError(f + "is not function");
+
+  const o = Object.create(f.prototype);
+
+  const _o = f.call(o, ...args);
+
+  return _o instanceof Object ? _o : o;
+}
+
+function new_4() {
+  // const o = new Object();
+  // const Constructor = [].shift.call(arguments);
+  // o.__proto__ = Constructor.prototype;
+  // const ret = Constructor.apply(o, arguments);
+  // return typeof ret === "object" ? ret || o : o;
+}
+
+/**
+ * instanceof
+ */
+function instanceOf(left, right) {
+  let proto = left.__proto__;
+  while (true) {
+    if (proto === null) return false;
+    if (proto === right.prototype) return true;
+    proto = proto.__proto__;
+  }
+}
+
+/**
+ * Object.create
+ */
+Object.writeCreate = function (proto, property = undefined) {
+  if (typeof proto !== "object" || typeof proto !== "function")
+    throw new TypeError(proto + "is not object");
+
+  function Fun() {}
+
+  Fun.prototype = proto;
+
+  const o = new Fun();
+
+  if (property) Object.defineProperties(o, property);
+
+  if (proto === null) proto.__proto__ = null;
+
+  return o;
+};
+
+/**
+ * Object.assign
+ */
+Object.writeAssign = function (target, ...source) {
+  if (target === null) throw new TypeError(target + "is null");
+
+  const ret = new Object();
+
+  source.forEach(o => {
+    if (o !== null) {
+      for (const k in o) {
+        if (o.hasOwnProperty(k)) ret[k] = o[k];
+      }
+    }
+  });
+
+  return ret;
+};
+
+/**
+ * JSON.stringify
+ *     undefined ===> undefined
+ *    boolean ===> true/false
+ *    number ===> 字符串数值
+ *    symbol ===> undefined
+ *    null ===> 'null'
+ *    string ===> string
+ *    NaN/infinity ===> 'null'
+ *    function ===> undefined
+ *
+ *    对象
+ *      数组,如果属性出现undefined,symbol,函数,转换为'null'
+ *      RegExp,返回'{}'
+ *      Date, 返回Date的toJSON字符串值
+ *      普通对象
+ *        如果有toJSON()方法,那么序列化toJSON()的返回值
+ *        如果属性值中出现undefined、任意函数、symbol值，忽略
+ *        所有以symbol为属性键的属性都会被忽略
+ *
+ *    对包含循环引用的对象(对象之间相互引用，形成无限)执行此方法,会抛出错误
+ */
+function stringify(data) {
+  const type = typeof data;
+
+  const isUndefined = [undefined, "symbol", "function"];
+
+  if (type !== "object") {
+    let result = data;
+
+    if (Number.isNaN(data) || data === Infinity) {
+      result = "null";
+    } else if (isUndefined.includes(type)) {
+      return undefined;
+    } else if (type === "string") {
+      result = `"${data}"`;
+    }
+    return String(result);
+  } else if (type === "object") {
+    if (data === null) {
+      return "null";
+    } else if (data.toJSON() && typeof data.toJSON === "function") {
+      return stringify(data.toJSON());
+    } else if (data instanceof Array) {
+      let result = [];
+
+      data.forEach((item, index) => {
+        if (isUndefined.includes(item)) {
+          result[index] = "null";
+        } else {
+          result[index] = stringify(item);
+        }
+      });
+
+      const resultStr = `[${result}]`;
+
+      return resultStr.replace(/'/g, '"');
+    }
+  } else {
+    let result = [];
+
+    Object.keys(data).forEach(item => {
+      if (typeof item !== "symbol") {
+        if (!isUndefined.includes(data[item])) {
+          result.push(`"${item}":"${stringify(data[item])}"`);
+        }
+      }
+    });
+
+    return `"${result}"`.replace(/'/g, '"');
+  }
+}
+
+/**
+ * Promise
+ */
+const PENDING = "PENDING";
+const FULFIllED = "fulfilled";
+const REJECTED = "rejected";
+
+class MyPromise {
+  constructor(exe) {
+    try {
+      exe(this.resolve, this.reject);
+    } catch (error) {
+      this.reject(error);
+    }
+  }
+}
