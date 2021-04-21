@@ -1,0 +1,22 @@
+{
+  "name": "handwriting",
+  "version": "1.0.0",
+  "description": "",
+  "main": "promise.js",
+  "scripts": {
+    "test": "promises-aplus-tests promise"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hzhxi9/hand_writing.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Hzhxi9/hand_writing/issues"
+  },
+  "homepage": "https://github.com/Hzhxi9/hand_writing#readme",
+  "dependencies": {
+    "promises-aplus-tests": "^2.1.2"
+  }
+}

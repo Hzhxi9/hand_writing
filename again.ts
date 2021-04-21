@@ -1156,20 +1156,3 @@ function stringify(data) {
     return `"${result}"`.replace(/'/g, '"');
   }
 }
-
-/**
- * Promise
- */
-const PENDING = "PENDING";
-const FULFIllED = "fulfilled";
-const REJECTED = "rejected";
-
-class MyPromise {
-  constructor(exe) {
-    try {
-      exe(this.resolve, this.reject);
-    } catch (error) {
-      this.reject(error);
-    }
-  }
-}
